@@ -1,0 +1,24 @@
+#include <ros.h>
+#include <std_msgs/Int8.h>
+
+ros::NodeHandle nh;
+
+std_msgs::Int8 int_msg;
+ros::Publisher light_level("light_level", &int_msg);
+
+int level = 0;
+
+void setup()
+{
+  nh.initNode();
+  nh.advertise(light_level);
+}
+
+void loop()
+{
+  int_msg.data = level;
+  light_level.publish( &int_msg );
+  nh.spinOnce();
+  level = level+1;
+  delay(100);
+}
