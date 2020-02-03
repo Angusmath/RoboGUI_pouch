@@ -5,6 +5,11 @@
 #include <Adafruit_SPITFT_Macros.h>
 #include <gfxfont.h>
 #include "RoboGUI_pouch.h"
+#include <ros.h>
+#include <std_msgs/Uint8.h>
+#include <std_msgs/String.h>
+
+ros::NodeHandle nh;
 
 extern "C" {
   #include "utility/twi.h"
@@ -23,6 +28,23 @@ boolean bootingFlag,
   batteryFlag,
   emergencyFlag;
 
+void emergencyText( const std_msgs::String& emergencyMsg){
+  Serial.print(emergencyMsg.data);
+  //Test for output when LCD arrives
+}
+
+void batteryValue( const std_msgs::Uint8& batteryLevel){
+  if(batteryLevel>60){
+    batteryState = battery_5;
+  }
+  else{
+    batteryState = battery_2;
+  }
+}
+
+ros::Subscriber<std_msgs::String> sub("Emergency", &emergencyText);
+ros::Subscriber<std_msgs::Uint8> sub("Battery", &batteryValue);
+
 void tcaselect(uint8_t i) {
   if (i > 7) return;
  
@@ -33,6 +55,9 @@ void tcaselect(uint8_t i) {
   
 void setup() {
 
+  nh.initNode();
+  nh.subscribe(sub);
+  
   while (!Serial);
     delay(1000);
 
@@ -76,7 +101,8 @@ void setup() {
   matrix.clear();
   matrix.writeDisplay();
   
-  state = BOOTING;
+  state = BATTERY;
+  batteryState = battery_6;
 }
 
 void loop() {
@@ -86,6 +112,8 @@ void loop() {
     Serial.println();   //print line feed character
   }
   */
+  nh.spinOnce();
+  delay(1);
   
   switch(state){
     case BOOTING:
@@ -194,43 +222,49 @@ void loop() {
     case BATTERY:
       batteryFlag = true;
       while(batteryFlag){
+
         matrix.clear();
-        matrix.drawBitmap(0, 0, battery_6, 8, 8, LED_GREEN);
+        matrix.drawBitmap(0, 0, batteryState, 8, 8, LED_GREEN);
         matrix.writeDisplay();
         delay(1000);
-        
-        matrix.clear();
-        matrix.drawBitmap(0, 0, battery_5, 8, 8, LED_GREEN);
-        matrix.writeDisplay();
-        delay(1000);
-        
-        matrix.clear();
-        matrix.drawBitmap(0, 0, battery_4, 8, 8, LED_GREEN);
-        matrix.writeDisplay();
-        delay(1000);
-        
-        matrix.clear();
-        matrix.drawBitmap(0, 0, battery_3, 8, 8, LED_YELLOW);
-        matrix.writeDisplay();
-        delay(1000);
-        
-        matrix.clear();
-        matrix.drawBitmap(0, 0, battery_2, 8, 8, LED_YELLOW);
-        matrix.writeDisplay();
-        delay(1000);
-        
-        matrix.clear();
-        matrix.drawBitmap(0, 0, battery_1, 8, 8, LED_RED);
-        matrix.writeDisplay();
-        delay(1000);
-        
-        for(int i = 0; i < 5; i++){
-          matrix.clear();
-          matrix.writeDisplay();
-          delay(200);
-          matrix.drawBitmap(0, 0, battery_0, 8, 8, LED_RED);
-          matrix.writeDisplay();
-          delay(200);
+
+//        matrix.clear();
+//        matrix.drawBitmap(0, 0, battery_6, 8, 8, LED_GREEN);
+//        matrix.writeDisplay();
+//        delay(1000);
+//        
+//        matrix.clear();
+//        matrix.drawBitmap(0, 0, battery_5, 8, 8, LED_GREEN);
+//        matrix.writeDisplay();
+//        delay(1000);
+//        
+//        matrix.clear();
+//        matrix.drawBitmap(0, 0, battery_4, 8, 8, LED_GREEN);
+//        matrix.writeDisplay();
+//        delay(1000);
+//        
+//        matrix.clear();
+//        matrix.drawBitmap(0, 0, battery_3, 8, 8, LED_YELLOW);
+//        matrix.writeDisplay();
+//        delay(1000);
+//        
+//        matrix.clear();
+//        matrix.drawBitmap(0, 0, battery_2, 8, 8, LED_YELLOW);
+//        matrix.writeDisplay();
+//        delay(1000);
+//        
+//        matrix.clear();
+//        matrix.drawBitmap(0, 0, battery_1, 8, 8, LED_RED);
+//        matrix.writeDisplay();
+//        delay(1000);
+//        
+//        for(int i = 0; i < 5; i++){
+//          matrix.clear();
+//          matrix.writeDisplay();
+//          delay(200);
+//          matrix.drawBitmap(0, 0, battery_0, 8, 8, LED_RED);
+//          matrix.writeDisplay();
+//          delay(200);
         }
         batteryFlag = false;
       }
